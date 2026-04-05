@@ -1,0 +1,28 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:     #1e1e2e;
+  --bg1:    #181825;
+  --bg2:    #313244;
+  --bg3:    #45475a;
+  --fg:     #cdd6f4;
+  --muted:  #6c7086;
+  --accent: #89b4fa;
+  --green:  #a6e3a1;
+  --yellow: #f9e2af;
+  --red:    #f38ba8;
+  --mauve:  #cba6f7;
+  --teal:   #94e2d5;
+  --peach:  #fab387;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --sans: 'Inter', system-ui, sans-serif;
+}
+
+html, body, #root {
+  width: 100%;
+  background: transparent;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+}
