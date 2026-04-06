@@ -1,73 +1,59 @@
-# React + TypeScript + Vite
+# keybind-hud
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A searchable keybinding overlay for macOS, built with Tauri and React. Hit `⌥+/` anywhere to bring it up — search across all your tools, run commands, or copy a binding to the clipboard without leaving the keyboard.
 
-Currently, two official plugins are available:
+![keybind-hud preview](./public/preview.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## What it does
 
-## React Compiler
+The HUD aggregates keybindings from your config files and presents them in a single searchable list. It parses your actual dotfiles live, so it stays in sync as you change things. If a parser fails, it falls back to a hardcoded set of sane defaults.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Sources it reads:
 
-## Expanding the ESLint configuration
+- **skhd** — `~/.skhdrc`
+- **neovim** — `~/.config/nvim/lua/config/keymaps.lua` and plugin files under `~/.config/nvim/lua/plugins/`
+- **tmux** — `~/.config/tmux/tmux.conf`
+- **zellij** — `~/.config/zellij/config.kdl`
+- **CLI tools** — hardcoded reference list (eza, bat, fzf, lazygit, etc.)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+You can switch between tmux and zellij from the system tray — the HUD will show the right set of multiplexer bindings.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Usage
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+| Key | Action |
+|---|---|
+| `⌥+/` | Toggle the HUD |
+| Type | Filter by key, description, or tag |
+| `Tab` | Cycle category filter (all → skhd → nvim → tmux/zellij → cli) |
+| `↑/↓` or `j/k` | Navigate results |
+| `Enter` | Run command (skhd entries) or copy key to clipboard |
+| `Escape` | Clear search, or close if already empty |
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+skhd entries have a runnable command attached — selecting one executes it directly. Everything else copies the key string to the clipboard.
+
+## Work timer
+
+The HUD has a built-in work timer at the bottom of the panel. It tracks a 7h45m workday and shows time remaining (or overtime). Clock in with the button or via the skhd binding `⌥+⇧+W`, set a custom start time if you forgot to clock in, and clock out when done.
+
+## Setup
+
+Requires Rust and Node/pnpm.
+
+```sh
+git clone https://github.com/sicazo/keybind-hud
+cd keybind-hud
+pnpm install
+pnpm tauri build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Move the built `.app` to `/Applications`. It registers a launch agent on first run so it starts automatically on login. The global shortcut `⌥+/` is registered system-wide — no need to keep it focused.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+The system tray icon lets you switch the multiplexer preference between tmux and zellij. Config is saved to `~/.config/keybind-hud/config.json`.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Dev
+
+```sh
+pnpm tauri dev
 ```
+
+Parsers live in `src-tauri/src/parsers/`. Each tool has its own file. To add a new source, implement a `parse(path: &str) -> Result<Vec<Entry>>` function and call it from `parsers/mod.rs`.
