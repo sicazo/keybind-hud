@@ -6,6 +6,7 @@ pub enum Category {
     Skhd,
     Nvim,
     Zellij,
+    Tmux,
     Cli,
 }
 
@@ -15,6 +16,7 @@ impl Category {
             Category::Skhd => "skhd",
             Category::Nvim => "nvim",
             Category::Zellij => "zellij",
+            Category::Tmux => "tmux",
             Category::Cli => "cli",
         }
     }
@@ -131,6 +133,37 @@ pub fn hardcoded_entries() -> Vec<Entry> {
     zj!("⌃S", "enter scroll mode", "scroll");
     zj!("⌃S /", "search in scroll", "scroll", "search");
 
+    // ── tmux ─────────────────────────────────────────────────────────────
+    macro_rules! tx {
+        ($key:expr, $desc:expr, $($tag:expr),*) => {
+            e.push(Entry::new($key, $desc, Category::Tmux, vec![$($tag),*]));
+        };
+    }
+    // prefix = ⌃D
+    tx!("⌃G", "lazygit popup (no prefix)", "git", "lazygit");
+    tx!("⌃D+\\", "split pane vertical", "pane", "split");
+    tx!("⌃D+-", "split pane horizontal", "pane", "split");
+    tx!("⌃D+h", "focus pane left", "pane", "navigation");
+    tx!("⌃D+j", "focus pane down", "pane", "navigation");
+    tx!("⌃D+k", "focus pane up", "pane", "navigation");
+    tx!("⌃D+l", "focus pane right", "pane", "navigation");
+    tx!("⌃D+H", "resize pane left", "pane", "resize");
+    tx!("⌃D+J", "resize pane down", "pane", "resize");
+    tx!("⌃D+K", "resize pane up", "pane", "resize");
+    tx!("⌃D+L", "resize pane right", "pane", "resize");
+    tx!("⌃D+c", "new window", "window");
+    tx!("⌃D+d", "detach session", "session", "detach");
+    tx!("⌃D+s", "list sessions", "session");
+    tx!("⌃D+S", "new named session", "session");
+    tx!("⌃D+q", "kill session", "session");
+    tx!("⌃D+r", "reload config", "config");
+    tx!("⌃D+↵", "enter copy mode", "copy");
+    tx!("⌃D+[v]", "copy mode: begin selection", "copy");
+    tx!("⌃D+[y]", "copy mode: copy to clipboard", "copy");
+    tx!("⌥+n", "next window (no prefix)", "window", "navigation");
+    tx!("⌥+p", "prev window (no prefix)", "window", "navigation");
+    tx!("⌥+1–9", "jump to window 1–9 (no prefix)", "window", "navigation");
+
     // ── Nvim ────────────────────────────────────────────────────────────
     macro_rules! nv {
         ($key:expr, $desc:expr, $($tag:expr),*) => {
@@ -233,7 +266,7 @@ pub fn hardcoded_entries() -> Vec<Entry> {
     cl!("direnv", "auto-load .env per directory", "dev", "env");
     cl!("watchexec", "run cmd on file changes", "dev");
     cl!("just", "project command runner", "dev", "scripts");
-    cl!("zellij / zj", "terminal multiplexer", "terminal");
+    cl!("zellij / zj / tmux", "terminal multiplexer", "terminal");
     cl!("glow", "render markdown in terminal", "docs");
     cl!("tldr", "simplified man pages", "docs");
     cl!("bottom / btm", "system monitor with graphs", "system");

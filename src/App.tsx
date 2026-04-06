@@ -7,7 +7,7 @@ import { CategoryFilter } from "./components/CategoryFilter";
 import { ResultList } from "./components/ResultList";
 import { SearchBar } from "./components/SearchBar";
 import { WorkTimer } from "./components/WorkTimer";
-import type { Category, Entry } from "./types";
+import type { Category, Entry, MuxPref } from "./types";
 import { useSearch } from "./useSearch";
 
 export default function App() {
@@ -16,14 +16,21 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [muxPref, setMuxPref] = useState<MuxPref>("tmux");
   const searchRef = useRef<HTMLInputElement>(null);
   const resultsLenRef = useRef(0);
 
-  // Load entries on mount + subscribe to live updates
+  // Load entries + mux preference on mount, subscribe to live updates
   useEffect(() => {
     invoke<Entry[]>("get_entries").then(setEntries).catch(console.error);
-    const unlisten = listen<Entry[]>("keybinds-updated", (e) => setEntries(e.payload));
-    return () => { unlisten.then((fn) => fn()); };
+    invoke<string>("get_mux_pref").then((p) => setMuxPref(p as MuxPref)).catch(console.error);
+
+    const unlistenEntries = listen<Entry[]>("keybinds-updated", (e) => setEntries(e.payload));
+    const unlistenMux = listen<string>("mux-changed", (e) => setMuxPref(e.payload as MuxPref));
+    return () => {
+      unlistenEntries.then((fn) => fn());
+      unlistenMux.then((fn) => fn());
+    };
   }, []);
 
   const results = useSearch(entries, query, activeCategory);
@@ -70,6 +77,10 @@ export default function App() {
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       const inSearch = document.activeElement === searchRef.current;
+      // Tab cycles through: all → skhd → nvim → active mux → cli
+      const muxCat = muxPref as Category;
+      const cats: (Category | null)[] = [null, "skhd", "nvim", muxCat, "cli"];
+
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
@@ -93,7 +104,6 @@ export default function App() {
           break;
         case "Tab": {
           e.preventDefault();
-          const cats: (Category | null)[] = [null, "skhd", "nvim", "zellij", "cli"];
           setActiveCategory((c) => {
             const idx = cats.indexOf(c);
             return cats[(idx + 1) % cats.length];
@@ -102,7 +112,7 @@ export default function App() {
         }
       }
     },
-    [selectedIndex, query, results, handleSelect, dismiss]
+    [selectedIndex, query, results, handleSelect, dismiss, muxPref]
   );
 
   return (
@@ -119,6 +129,7 @@ export default function App() {
           active={activeCategory}
           onChange={setActiveCategory}
           entries={entries}
+          muxPref={muxPref}
         />
         <ResultList
           results={results}

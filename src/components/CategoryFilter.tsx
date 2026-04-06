@@ -1,22 +1,26 @@
-import type { Category, Entry } from "../types";
-import { CATEGORY_ORDER } from "../types";
+import type { Category, Entry, MuxPref } from "../types";
 
 interface Props {
   active: Category | null;
   onChange: (c: Category | null) => void;
   entries: Entry[];
+  muxPref: MuxPref;
 }
 
 const LABELS: Record<Category, string> = {
-  skhd: "skhd",
-  nvim: "nvim",
+  skhd:   "skhd",
+  nvim:   "nvim",
   zellij: "zellij",
-  cli: "cli",
+  tmux:   "tmux",
+  cli:    "cli",
 };
 
-export function CategoryFilter({ active, onChange, entries }: Props) {
+export function CategoryFilter({ active, onChange, entries, muxPref }: Props) {
+  // Show the active mux category, hide the other one
+  const visibleCats: Category[] = ["skhd", "nvim", muxPref as Category, "cli"];
+
   const counts = Object.fromEntries(
-    CATEGORY_ORDER.map((c) => [c, entries.filter((e) => e.category === c).length])
+    visibleCats.map((c) => [c, entries.filter((e) => e.category === c).length])
   );
 
   return (
@@ -27,7 +31,7 @@ export function CategoryFilter({ active, onChange, entries }: Props) {
       >
         all <span className="cat-count">{entries.length}</span>
       </button>
-      {CATEGORY_ORDER.map((cat) => (
+      {visibleCats.map((cat) => (
         <button
           key={cat}
           data-cat={cat}

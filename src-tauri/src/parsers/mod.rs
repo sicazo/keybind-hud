@@ -1,12 +1,15 @@
 pub mod nvim;
 pub mod skhd;
+pub mod tmux;
 pub mod zellij;
 
+use crate::config::{self, MuxPref};
 use crate::entries::Entry;
 use std::collections::HashSet;
 
 pub fn parse_all() -> Vec<Entry> {
     let home = std::env::var("HOME").unwrap_or_default();
+    let cfg = config::load();
     let mut entries = vec![];
 
     // skhd
@@ -30,17 +33,31 @@ pub fn parse_all() -> Vec<Entry> {
             .collect()),
     }
 
-    // zellij
-    let zellij_path = format!("{}/.config/zellij/config.kdl", home);
-    match zellij::parse(&zellij_path) {
-        Ok(mut e) => entries.append(&mut e),
-        Err(_) => entries.append(&mut crate::entries::hardcoded_entries()
-            .into_iter()
-            .filter(|e| e.category == crate::entries::Category::Zellij)
-            .collect()),
+    // multiplexer — serve tmux or zellij entries based on saved preference
+    match cfg.mux {
+        MuxPref::Tmux => {
+            let tmux_path = format!("{}/.config/tmux/tmux.conf", home);
+            match tmux::parse(&tmux_path) {
+                Ok(mut e) => entries.append(&mut e),
+                Err(_) => entries.append(&mut crate::entries::hardcoded_entries()
+                    .into_iter()
+                    .filter(|e| e.category == crate::entries::Category::Tmux)
+                    .collect()),
+            }
+        }
+        MuxPref::Zellij => {
+            let zellij_path = format!("{}/.config/zellij/config.kdl", home);
+            match zellij::parse(&zellij_path) {
+                Ok(mut e) => entries.append(&mut e),
+                Err(_) => entries.append(&mut crate::entries::hardcoded_entries()
+                    .into_iter()
+                    .filter(|e| e.category == crate::entries::Category::Zellij)
+                    .collect()),
+            }
+        }
     }
 
-    // CLI tools always come from hardcoded list
+    // CLI tools always from hardcoded list
     entries.append(&mut crate::entries::hardcoded_entries()
         .into_iter()
         .filter(|e| e.category == crate::entries::Category::Cli)

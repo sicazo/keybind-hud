@@ -1,8 +1,9 @@
+use crate::config::{self, MuxPref};
 use crate::entries::Entry;
 use crate::parsers;
 use serde::Serialize;
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 /// Return all parsed entries to the frontend.
@@ -36,6 +37,40 @@ pub fn copy_to_clipboard(app: AppHandle, text: String) -> Result<(), String> {
     app.clipboard()
         .write_text(text)
         .map_err(|e| e.to_string())
+}
+
+/// Return the current multiplexer preference ("tmux" or "zellij").
+#[tauri::command]
+pub fn get_mux_pref() -> String {
+    match config::load().mux {
+        MuxPref::Tmux => "tmux".into(),
+        MuxPref::Zellij => "zellij".into(),
+    }
+}
+
+/// Set multiplexer preference and push refreshed entries to the frontend.
+#[tauri::command]
+pub fn set_mux_pref(app: AppHandle, mux: String) -> Result<(), String> {
+    let pref = match mux.as_str() {
+        "tmux" => MuxPref::Tmux,
+        "zellij" => MuxPref::Zellij,
+        other => return Err(format!("unknown mux: {other}")),
+    };
+    let mut cfg = config::load();
+    cfg.mux = pref;
+    config::save(&cfg);
+    // push updated entries immediately
+    let entries = parsers::parse_all();
+    let _ = app.emit("keybinds-updated", entries);
+    // also notify tray label update
+    let _ = app.emit("mux-changed", cfg.mux);
+    Ok(())
+}
+
+/// Quit the application.
+#[tauri::command]
+pub fn quit_app(app: AppHandle) {
+    app.exit(0);
 }
 
 // ── Work timer ────────────────────────────────────────────────────────────────

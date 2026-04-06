@@ -12,6 +12,8 @@ pub async fn start_watcher(app: AppHandle) {
         format!("{}/.config/nvim/lua/config/keymaps.lua", home),
         format!("{}/.config/nvim/lua/plugins", home),
         format!("{}/.config/zellij/config.kdl", home),
+        format!("{}/.config/tmux/tmux.conf", home),
+        format!("{}/.config/keybind-hud/config.json", home),
     ];
 
     let app_clone = app.clone();
