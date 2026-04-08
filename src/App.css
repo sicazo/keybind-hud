@@ -176,6 +176,10 @@
   flex-shrink: 0;
 }
 
+.result-cat-dot-quit {
+  background: var(--red, #f38ba8);
+}
+
 .result-key {
   font-family: var(--mono);
   font-size: 12px;

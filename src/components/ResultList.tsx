@@ -34,36 +34,45 @@ export function ResultList({ results, selectedIndex, onSelect, onHover, query }:
 
   return (
     <div className="result-list" ref={listRef}>
-      {results.map((entry, i) => (
+      {results.map((entry, i) => {
+        const isQuit = entry.id === "__quit__";
+        return (
         <div
           key={entry.id}
           ref={i === selectedIndex ? selectedRef : undefined}
-          className={`result-item ${i === selectedIndex ? "selected" : ""}`}
+          className={`result-item ${i === selectedIndex ? "selected" : ""} ${isQuit ? "result-item-quit" : ""}`}
           onClick={() => onSelect(entry)}
           onMouseEnter={() => onHover(i)}
         >
-          <span
-            className="result-cat-dot"
-            style={{ background: CATEGORY_COLORS[entry.category] }}
-          />
+          {isQuit ? (
+            <span className="result-cat-dot result-cat-dot-quit" />
+          ) : (
+            <span
+              className="result-cat-dot"
+              style={{ background: CATEGORY_COLORS[entry.category] }}
+            />
+          )}
           <span className="result-key">
             {highlight(entry.key, query)}
           </span>
           <span className="result-desc">
             {highlight(entry.desc, query)}
           </span>
-          <span
-            className="result-badge"
-            style={{
-              background: `color-mix(in srgb, ${CATEGORY_COLORS[entry.category]} 12%, transparent)`,
-              color: CATEGORY_COLORS[entry.category],
-            }}
-          >
-            {entry.category}
-          </span>
-          <span className="result-action-hint">{entry.command ? "↵ run" : "↵ copy"}</span>
+          {!isQuit && (
+            <span
+              className="result-badge"
+              style={{
+                background: `color-mix(in srgb, ${CATEGORY_COLORS[entry.category]} 12%, transparent)`,
+                color: CATEGORY_COLORS[entry.category],
+              }}
+            >
+              {entry.category}
+            </span>
+          )}
+          <span className="result-action-hint">{isQuit ? "↵ quit" : entry.command ? "↵ run" : "↵ copy"}</span>
         </div>
-      ))}
+        );
+      })}
       {results.length > 0 && (
         <div className="hud-footer">
           <span><kbd>↑↓</kbd> navigate</span>

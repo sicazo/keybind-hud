@@ -10,6 +10,15 @@ import { WorkTimer } from "./components/WorkTimer";
 import type { Category, Entry, MuxPref } from "./types";
 import { useSearch } from "./useSearch";
 
+const QUIT_ENTRY: Entry = {
+  id: "__quit__",
+  key: "quit",
+  desc: "quit keybind hud",
+  category: "skhd",
+  tags: ["quit", "exit", "close"],
+  command: null,
+};
+
 export default function App() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [query, setQuery] = useState("");
@@ -33,7 +42,9 @@ export default function App() {
     };
   }, []);
 
-  const results = useSearch(entries, query, activeCategory);
+  const searchResults = useSearch(entries, query, activeCategory);
+  const quitMatches = !activeCategory && (!query || "quit".includes(query.toLowerCase()) || "exit".includes(query.toLowerCase()));
+  const results = quitMatches ? [...searchResults, QUIT_ENTRY] : searchResults;
   resultsLenRef.current = results.length;
 
   // Reset selection when query/filter changes
@@ -62,6 +73,10 @@ export default function App() {
 
   const handleSelect = useCallback(
     (entry: Entry) => {
+      if (entry.id === "__quit__") {
+        invoke("quit_app").catch(console.error);
+        return;
+      }
       if (entry.command) {
         invoke("run_command", { command: entry.command }).catch(console.error);
         dismiss();

@@ -155,25 +155,26 @@ pub fn work_set_time(time: String) -> Result<(), String> {
         return Err("out of range".into());
     }
 
-    // Get start of today (midnight) as unix timestamp
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs() as i64;
-    let secs_since_midnight = now % 86400;
-    let midnight = now - secs_since_midnight;
-    let stamp = midnight + h * 3600 + m * 60;
+    // Get start of today (local midnight) as unix timestamp
+    use chrono::{Local, Datelike, TimeZone};
+    let local_now = Local::now();
+    let local_midnight = Local
+        .with_ymd_and_hms(local_now.year(), local_now.month(), local_now.day(), 0, 0, 0)
+        .single()
+        .ok_or("could not determine local midnight")?;
+    let stamp = local_midnight.timestamp() + h * 3600 + m * 60;
 
     let _ = std::fs::write(work_file(), stamp.to_string());
     trigger_sketchybar();
     Ok(())
 }
 
-/// Returns "YYYY-MM-DD" for a unix timestamp (UTC, good enough for same-day check).
+/// Returns "YYYY-MM-DD" (local time) for a unix timestamp.
 fn chrono_date(ts: i64) -> String {
-    let secs = ts % 86400;
-    let days = ts / 86400;
-    // Simple: just use the date portion to compare, no TZ needed for same-day logic
-    let _ = secs;
-    format!("{}", days)
+    use chrono::{Local, TimeZone};
+    Local
+        .timestamp_opt(ts, 0)
+        .single()
+        .map(|dt| dt.format("%Y-%m-%d").to_string())
+        .unwrap_or_default()
 }
