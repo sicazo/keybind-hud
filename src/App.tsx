@@ -2,10 +2,11 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useCallback, useEffect, useRef, useState } from "react";
-import "./app.css";
+import "./App.css";
 import { CategoryFilter } from "./components/CategoryFilter";
 import { ResultList } from "./components/ResultList";
 import { SearchBar } from "./components/SearchBar";
+import { KeyboardLayouts } from "./components/KeyboardLayouts";
 import { WorkTimer } from "./components/WorkTimer";
 import type { Category, Entry, MuxPref } from "./types";
 import { useSearch } from "./useSearch";
@@ -26,6 +27,7 @@ export default function App() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [copied, setCopied] = useState(false);
   const [muxPref, setMuxPref] = useState<MuxPref>("tmux");
+  const [activeTab, setActiveTab] = useState<"keybinds" | "layouts">("keybinds");
   const searchRef = useRef<HTMLInputElement>(null);
   const resultsLenRef = useRef(0);
 
@@ -133,6 +135,11 @@ export default function App() {
   return (
     <div className="hud" onKeyDown={handleKeyDown} tabIndex={-1}>
       <div className="hud-inner">
+        <div className="view-tabs" role="tablist" aria-label="Main views">
+          <button type="button" role="tab" aria-selected={activeTab === "keybinds"} className={`view-tab ${activeTab === "keybinds" ? "active" : ""}`} onClick={() => setActiveTab("keybinds")}>Keybinds</button>
+          <button type="button" role="tab" aria-selected={activeTab === "layouts"} className={`view-tab ${activeTab === "layouts" ? "active" : ""}`} onClick={() => setActiveTab("layouts")}>Keyboard layouts</button>
+        </div>
+        {activeTab === "keybinds" ? <>
         <SearchBar
           ref={searchRef}
           value={query}
@@ -157,6 +164,7 @@ export default function App() {
           <div className="empty">no matches for "<span>{query}</span>"</div>
         )}
         <WorkTimer />
+        </> : <KeyboardLayouts />}
       </div>
     </div>
   );
